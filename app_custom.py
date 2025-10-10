@@ -44,42 +44,60 @@ if base_url:
 
                 # Comprehensive URL replacement for Kong/Docker environments
 
-                # 1. Direct localhost replacements
+                # 1. Handle Kong-specific pattern: "http://geoint-api.eodev.thaicom.io:8000/stac/"
+                # Replace any external domain with port numbers
+                json_str = re.sub(
+                    r'http://([^:]+):8000',
+                    f'{clean_base_url}',
+                    json_str
+                )
+
+                # 2. Handle HTTPS version of the same pattern
+                json_str = re.sub(
+                    r'https://([^:]+):8000',
+                    f'{clean_base_url}',
+                    json_str
+                )
+
+                # 3. Generic port removal for external domains (any port)
+                json_str = re.sub(
+                    r'http://([^:/]+):\d+',
+                    lambda m: f'https://{m.group(1)}' if clean_base_url.startswith('https://') and clean_base_url.split('://')[1] == m.group(1) else clean_base_url,
+                    json_str
+                )
+
+                # 4. Direct localhost replacements
                 json_str = json_str.replace(f"http://localhost:8087", clean_base_url)
                 json_str = json_str.replace(f"https://localhost:8087", clean_base_url)
                 json_str = json_str.replace(f"http://localhost:8000", clean_base_url)
                 json_str = json_str.replace(f"https://localhost:8000", clean_base_url)
 
-                # 2. Docker service name replacements (Kong internal routing)
+                # 5. Docker service name replacements (Kong internal routing)
                 json_str = json_str.replace(f"http://stac:8000", clean_base_url)
                 json_str = json_str.replace(f"https://stac:8000", clean_base_url)
                 json_str = json_str.replace(f"http://stac:8087", clean_base_url)
                 json_str = json_str.replace(f"https://stac:8087", clean_base_url)
 
-                # 3. Generic Docker service pattern replacement
-                # This catches any http://[service-name]:[port] pattern
+                # 6. Handle specific domain with port patterns more aggressively
+                # This specifically targets the pattern you mentioned
+                if "geoint-api.eodev.thaicom.io" in json_str:
+                    json_str = json_str.replace("http://geoint-api.eodev.thaicom.io:8000", clean_base_url)
+                    json_str = json_str.replace("https://geoint-api.eodev.thaicom.io:8000", clean_base_url)
+
+                # 7. Generic Docker service pattern replacement
                 json_str = re.sub(
                     r'https?://[a-zA-Z0-9][a-zA-Z0-9\-_]*[a-zA-Z0-9]*:\d+',
                     clean_base_url,
                     json_str
                 )
 
-                # 4. Handle full paths with service names
+                # 8. Handle full paths with service names
                 if root_path:
-                    # Replace patterns like "http://stac:8000/stac/" with proper base URL + path
                     json_str = re.sub(
-                        r'https?://[a-zA-Z0-9][a-zA-Z0-9\-_]*[a-zA-Z0-9]*:\d+' + re.escape(root_path),
+                        r'https?://[^/\s"]+:\d+' + re.escape(root_path),
                         f"{clean_base_url}{root_path}",
                         json_str
                     )
-
-                # 5. Fallback: replace any remaining internal Docker network references
-                # This is more aggressive and catches edge cases
-                json_str = re.sub(
-                    r'https?://[^/\s"]+:\d+',
-                    clean_base_url,
-                    json_str
-                )
 
                 # Create new response with modified content and proper headers
                 from fastapi import Response
