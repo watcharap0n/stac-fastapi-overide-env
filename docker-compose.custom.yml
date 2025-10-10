@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+  stac:
+    # Note:
+    # the official ghcr.io/stac-utils/stac-fastapi-pgstac image uses python 3.8 and uvicorn
+    # which is why here we use a custom Dockerfile using python 3.11 and gunicorn
+    container_name: stac
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.stac
+    ports:
+      - "8087:8087"
+    environment:
+      # Application
+      - HOST=0.0.0.0
+      - PORT=8087
+      - MODULE_NAME=app_custom
+      - VARIABLE_NAME=app
+      # Base URL and Path Prefix Configuration
+      - ROOT_PATH=/api/v1/stac
+      - BASE_URL=https://your-domain.com
+      - STAC_FASTAPI_TITLE=Custom STAC API
+      - STAC_FASTAPI_DESCRIPTION=STAC API with custom base URL
+      # gunicorn
+      # https://github.com/tiangolo/uvicorn-gunicorn-docker#web_concurrency
+      - WEB_CONCURRENCY=10
+      # https://github.com/tiangolo/uvicorn-gunicorn-docker#workers_per_core
+      # - WORKERS_PER_CORE=1
+      # https://github.com/tiangolo/uvicorn-gunicorn-docker#max_workers
+      # - MAX_WORKERS=10
+      # Postgres connection
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASS=dGhhaWNvbTIwMjUhQCMkY3JlYXRlZEJ5S2FuZQ==
+      - POSTGRES_DBNAME=pgstac
+      - POSTGRES_HOST_READER=host.docker.internal
+      - POSTGRES_HOST_WRITER=host.docker.internal
+      - POSTGRES_PORT=9009
+      - DB_MIN_CONN_SIZE=1
+      - DB_MAX_CONN_SIZE=10
+    networks:
+      - geoint-network
+
+
+networks:
+  geoint-network:
+    external: true

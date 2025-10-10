@@ -6,5 +6,11 @@ ENV CURL_CA_BUNDLE /etc/ssl/certs/ca-certificates.crt
 
 RUN python -m pip install stac-fastapi.api==2.4.8 stac-fastapi.extensions==2.4.8 stac-fastapi.pgstac==2.4.8 stac-fastapi.types==2.4.8 pygeoif==0.7 starlette_cramjam
 
-ENV MODULE_NAME stac_fastapi.pgstac.app
+# Copy our custom application file
+COPY app_custom.py /app/app_custom.py
+
+ENV MODULE_NAME app_custom
 ENV VARIABLE_NAME app
+
+# Optional: Set default ROOT_PATH (can be overridden in docker-compose)
+ENV ROOT_PATH=/api/v1/stac
