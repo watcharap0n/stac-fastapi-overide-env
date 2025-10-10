@@ -10,16 +10,16 @@ services:
       context: .
       dockerfile: dockerfiles/Dockerfile.stac
     ports:
-      - "8087:8087"
+      - "8087:8000"
     environment:
       # Application
       - HOST=0.0.0.0
-      - PORT=8087
+      - PORT=8000
       - MODULE_NAME=app_custom
       - VARIABLE_NAME=app
       # Base URL and Path Prefix Configuration
-      - ROOT_PATH=/api/v1/stac
-      - BASE_URL=https://your-domain.com
+      - ROOT_PATH=/stac
+      - BASE_URL=https://geoint-api.eodev.thaicom.io
       - STAC_FASTAPI_TITLE=Custom STAC API
       - STAC_FASTAPI_DESCRIPTION=STAC API with custom base URL
       # gunicorn
